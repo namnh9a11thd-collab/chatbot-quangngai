@@ -1,0 +1,30 @@
+[
+  {
+    "nganh_nghe": "Kỹ thuật / Cơ khí / Tự động hóa",
+    "vi_tri": "Kỹ sư vận hành dây chuyền, Kỹ thuật viên cơ khí",
+    "dia_diem": "Khu kinh tế Dung Quất, KCN VSIP Quảng Ngãi",
+    "yeu_cau": "Tốt nghiệp Cao đẳng/Đại học chuyên ngành Cơ khí, Điện tử, Tự động hóa.",
+    "muc_luong": "8 - 15 triệu VNĐ"
+  },
+  {
+    "nganh_nghe": "Công nghệ thông tin / IT",
+    "vi_tri": "Lập trình viên Web/Mobile, IT Support",
+    "dia_diem": "TP. Quảng Ngãi",
+    "yeu_cau": "Biết HTML/CSS, Python hoặc JavaScript. Tự học tốt.",
+    "muc_luong": "10 - 20 triệu VNĐ"
+  },
+  {
+    "nganh_nghe": "Kế toán / Tài chính / Hành chính",
+    "vi_tri": "Kế toán tổng hợp, Nhân viên hành chính nhân sự",
+    "dia_diem": "TP. Quảng Ngãi",
+    "yeu_cau": "Tốt nghiệp chuyên ngành Kế toán/QTKD. Thành thạo Excel.",
+    "muc_luong": "6 - 10 triệu VNĐ"
+  },
+  {
+    "nganh_nghe": "Du lịch / Nhà hàng - Khách sạn",
+    "vi_tri": "Lễ tân, Quản lý nhà hàng, Hướng dẫn viên",
+    "dia_diem": "TP. Quảng Ngãi, Lý Sơn",
+    "yeu_cau": "Năng động, giao tiếp tốt, ưu tiên ngoại ngữ.",
+    "muc_luong": "5 - 12 triệu VNĐ"
+  }
+]
