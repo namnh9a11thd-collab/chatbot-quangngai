@@ -1,87 +1,70 @@
 import json
 import os
-import google.generativeai as genai
+import openai
 import streamlit as st
 
-st.set_page_config(
-    page_title="Chatbot Tư Vấn Hướng Nghiệp Quảng Ngãi", page_icon="🤖"
+# Cấu hình kết nối Poe API
+api_key = (
+    st.secrets["POE_API_KEY"]
+    if "POE_API_KEY" in st.secrets
+    else os.getenv("POE_API_KEY")
 )
+client = openai.OpenAI(api_key=api_key, base_url="https://api.poe.com/v1")
 
-# Thay thế "DANG_KY_API_KEY_CUA_BAN_O_DAY" bằng API Key thật của bạn
-GOOGLE_API_KEY = "AQ.Ab8RN6K18OblOrWhCE5xsVkvJcYxsP1hPUAW8Ht-fpr8_R5uOw"
-
-if GOOGLE_API_KEY == "DANG_KY_API_KEY_CUA_BAN_O_DAY":
-    st.error("⚠️ Bạn chưa điền Google API Key trong file app.py!")
-else:
-    genai.configure(api_key=GOOGLE_API_KEY)
+st.title("🤖 Chatbot Tư Vấn Hướng Nghiệp & Việc Làm Quảng Ngãi")
 
 
+# Đọc dữ liệu từ file jobs_quangngai.json nếu có
 @st.cache_data
 def load_job_data():
   if os.path.exists("jobs_quangngai.json"):
     with open("jobs_quangngai.json", "r", encoding="utf-8") as f:
-      return json.load(f)
-  return []
+      return f.read()
+  return ""
 
 
-job_database = load_job_data()
+job_data_str = load_job_data()
 
-st.title("🤖 Chatbot Tư Vấn Hướng Nghiệp & Việc Làm Quảng Ngãi")
-st.markdown(
-    "Ứng dụng hỗ trợ phân tích sở thích, định hướng học tập và việc làm thực tế"
-    " tại địa phương."
-)
-
-try:
-  model = genai.GenerativeModel("gemini-1.5-flash")
-except Exception as e:
-  st.error(f"Lỗi khởi tạo AI: {e}")
-
+# Khởi tạo lịch sử chat kèm theo ngữ cảnh dữ liệu việc làm Quảng Ngãi
 if "messages" not in st.session_state:
   st.session_state.messages = [{
-      "role": "model",
-      "parts": [
-          "Xin chào! Hãy chia sẻ sở thích, chuyên ngành học và mong muốn công"
-          " việc của bạn tại Quảng Ngãi để tôi tư vấn nhé."
-      ],
+      "role": "system",
+      "content": (
+          "Bạn là một trợ lý AI thông minh chuyên tư vấn hướng nghiệp và việc"
+          " làm tại tỉnh Quảng Ngãi. Hãy dựa vào dữ liệu việc làm thực tế sau"
+          f" để trả lời người dùng một cách chính xác:\n{job_data_str}"
+      ),
   }]
 
+# Hiển thị lịch sử tin nhắn trên giao diện
 for message in st.session_state.messages:
-  with st.chat_message(message["role"]):
-    st.markdown(message["parts"][0])
+  if message["role"] != "system":
+    with st.chat_message(message["role"]):
+      st.markdown(message["content"])
 
-if user_input := st.chat_input("Nhập sở thích hoặc câu hỏi của bạn..."):
-  st.session_state.messages.append({"role": "user", "parts": [user_input]})
+# Nhập câu hỏi từ người dùng
+if prompt := st.chat_input(
+    "Bạn muốn tìm việc làm hoặc tư vấn ngành nghề nào ở Quảng Ngãi?"
+):
+  st.session_state.messages.append({"role": "user", "content": prompt})
   with st.chat_message("user"):
-    st.markdown(user_input)
+    st.markdown(prompt)
 
-  system_instruction = f"""
-    Bạn là chuyên gia tư vấn hướng nghiệp tại Quảng Ngãi. Hãy tư vấn cho người dùng dựa trên:
-    - Sở thích, học tập và định hướng cá nhân của họ.
-    - Thị trường lao động thực tế tại Quảng Ngãi (KKT Dung Quất, KCN VSIP, TP. Quảng Ngãi).
-    
-    Dữ liệu việc làm tham khảo:
-    {json.dumps(job_database, ensure_ascii=False, indent=2)}
-    """
-
-  chat_history_for_gemini = []
-  for msg in st.session_state.messages:
-    gemini_role = "user" if msg["role"] == "user" else "model"
-    chat_history_for_gemini.append(
-        {"role": gemini_role, "parts": msg["parts"]}
-    )
-
-  try:
-    with st.spinner("Đang tìm kiếm cơ hội và phân tích..."):
-      chat_session = model.start_chat(history=chat_history_for_gemini[:-1])
-      response = chat_session.send_message(
-          f"{system_instruction}\n\nYêu cầu của người dùng: {user_input}"
-      )
-      bot_reply = response.text
-
-    with st.chat_message("model"):
-      st.markdown(bot_reply)
-
-    st.session_state.messages.append({"role": "model", "parts": [bot_reply]})
-  except Exception as e:
-    st.error(f"Lỗi kết nối AI: {e}")
+  # Gọi API từ Poe
+  with st.chat_message("assistant"):
+    with st.spinner("Đang tìm kiếm thông tin..."):
+      try:
+        response = client.chat.completions.create(
+            model="GPT-4o-mini",
+            messages=[
+                {"role": m["role"], "content": m["content"]}
+                for m in st.session_state.messages
+            ],
+        )
+        reply = response.choices[0].message.content
+        st.markdown(reply)
+        st.session_state.messages.append(
+            {"role": "assistant", "content": reply}
+        )
+      except Exception as e:
+        st.error(f"Đã xảy ra lỗi kết nối: {e}")
